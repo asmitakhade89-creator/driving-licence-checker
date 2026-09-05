@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driving Licence Eligibility Checker · Java Mini Project</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #dbeafe 0%, transparent 60%),
+        radial-gradient(1000px 500px at 100% 10%, #e0f2fe 0%, transparent 55%),
+        linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+      color: #0f172a;
+      padding: 40px 20px;
+      overflow-x: hidden;
+    }
+    .grid-bg {
+      position: fixed; inset: 0; pointer-events: none; opacity: 0.35;
+      background-image:
+        linear-gradient(#c7dbff 1px, transparent 1px),
+        linear-gradient(90deg, #c7dbff 1px, transparent 1px);
+      background-size: 48px 48px;
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+              mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    }
+    .container { max-width: 900px; margin: 0 auto; position: relative; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; border: 1px solid #bfdbfe; color: #1d4ed8;
+      padding: 6px 16px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 16px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+    header { text-align: center; margin-bottom: 40px; }
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(36px, 6vw, 60px);
+      font-weight: 900; line-height: 1.05; letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+    h1 .accent {
+      background: linear-gradient(90deg, #2563eb, #0ea5e9, #4f46e5);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .subtitle { color: #475569; margin-top: 16px; font-size: 17px; }
+
+    .card {
+      background: #fff; border: 1px solid #dbeafe; border-radius: 24px;
+      padding: 32px; box-shadow: 0 20px 60px -20px rgba(59,130,246,0.25);
+    }
+    .step-label {
+      display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.15em;
+      text-transform: uppercase; color: #334155; margin-bottom: 12px;
+    }
+    .step-label .num { color: #2563eb; }
+
+    input[type="number"] {
+      width: 100%; padding: 16px 20px;
+      background: #eff6ff80; border: 2px solid #dbeafe; border-radius: 16px;
+      font-size: 24px; font-weight: 700; color: #0f172a;
+      outline: none; transition: all .2s; font-family: inherit;
+    }
+    input[type="number"]:focus { border-color: #2563eb; background: #fff; }
+    input::placeholder { color: #94a3b8; font-weight: 500; }
+
+    .field { margin-bottom: 32px; }
+
+    .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .vehicle-card {
+      cursor: pointer; text-align: left; padding: 16px;
+      background: #fff; border: 2px solid #dbeafe; border-radius: 16px;
+      transition: all .2s; font-family: inherit;
+    }
+    .vehicle-card:hover { border-color: #93c5fd; background: #eff6ff80; }
+    .vehicle-card.selected {
+      border-color: #2563eb; background: #eff6ff; transform: scale(1.02);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.15);
+    }
+    .vehicle-card .icon { font-size: 36px; margin-bottom: 8px; }
+    .vehicle-card .name { font-weight: 700; font-size: 14px; color: #0f172a; }
+    .vehicle-card .sub { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .vehicle-card .tag {
+      display: inline-block; margin-top: 8px; padding: 2px 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      background: #dbeafe; color: #1d4ed8; border-radius: 999px;
+    }
+    .vehicle-card.selected .tag { background: #2563eb; color: #fff; }
+
+    .yn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .yn {
+      padding: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      background: #fff; border: 2px solid #dbeafe; border-radius: 16px;
+      color: #475569; transition: all .2s; font-family: inherit;
+    }
+    .yn:hover { border-color: #93c5fd; }
+    .yn.yes-active { border-color: #10b981; background: #ecfdf5; color: #047857; transform: scale(1.02); box-shadow: 0 6px 20px rgba(16,185,129,0.15); }
+    .yn.no-active  { border-color: #f43f5e; background: #fff1f2; color: #be123c; transform: scale(1.02); box-shadow: 0 6px 20px rgba(244,63,94,0.15); }
+
+    .actions { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-primary {
+      flex: 1; min-width: 200px; padding: 16px; border: none; border-radius: 16px;
+      background: linear-gradient(90deg, #2563eb, #0ea5e9, #4f46e5);
+      color: #fff; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all .3s; font-family: inherit;
+    }
+    .btn-primary:hover { box-shadow: 0 10px 40px rgba(59,130,246,0.4); }
+    .btn-secondary {
+      width: 140px; padding: 16px; border-radius: 16px; cursor: pointer;
+      background: #fff; border: 1px solid #bfdbfe; color: #334155;
+      font-size: 16px; font-weight: 600; transition: all .2s; font-family: inherit;
+    }
+    .btn-secondary:hover { background: #eff6ff; }
+
+    .result { margin-top: 32px; padding: 24px; border-radius: 16px; border: 2px solid; animation: fadeIn .4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .result.success { border-color: #6ee7b7; background: #ecfdf5; }
+    .result.warning { border-color: #fcd34d; background: #fffbeb; }
+    .result.error   { border-color: #fda4af; background: #fff1f2; }
+    .result .title { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+    .result.success .title { color: #047857; }
+    .result.warning .title { color: #b45309; }
+    .result.error   .title { color: #be123c; }
+    .result .msg { color: #334155; font-size: 16px; }
+    .result .detail {
+      margin-top: 12px; padding: 8px 12px; border-radius: 8px;
+      font-family: 'Menlo', 'Courier New', monospace; font-size: 12px;
+      background: #fff; color: #334155; border: 1px solid #e2e8f0;
+    }
+
+    .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 32px; }
+    .rule-card {
+      background: #fff; border: 1px solid #dbeafe; border-radius: 12px;
+      padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .rule-card .icon { font-size: 28px; margin-bottom: 4px; }
+    .rule-card .name { font-size: 12px; font-weight: 600; color: #334155; }
+    .rule-card .age { font-size: 12px; color: #64748b; }
+    .rule-card .age b { color: #1d4ed8; }
+
+    footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 32px; }
+    footer code { font-family: monospace; color: #334155; padding: 1px 4px; background: #eff6ff; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="container">
+    <header>
+      <div class="badge"><span class="dot"></span> Java Mini Project · Relational Operators</div>
+      <h1>Driving Licence<br /><span class="accent">Eligibility Checker</span></h1>
+      <p class="subtitle">Enter your details below to check if you are eligible for a driving licence in India.</p>
+    </header>
+
+    <div class="card">
+      <!-- Age -->
+      <div class="field">
+        <label class="step-label"><span class="num">01</span> · Your Age</label>
+        <input type="number" id="age" min="1" max="120" placeholder="e.g. 18" />
+      </div>
+
+      <!-- Vehicle -->
+      <div class="field">
+        <label class="step-label"><span class="num">02</span> · Vehicle Type</label>
+        <div class="vehicle-grid" id="vehicleGrid"></div>
+      </div>
+
+      <!-- Learner -->
+      <div class="field">
+        <label class="step-label"><span class="num">03</span> · Do you have a Learner's Licence?</label>
+        <div class="yn-grid">
+          <button class="yn" id="ynYes" onclick="setLearner(true)">✓ Yes</button>
+          <button class="yn" id="ynNo"  onclick="setLearner(false)">✗ No</button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="check()">Check Eligibility →</button>
+        <button class="btn-secondary" onclick="reset()">Reset</button>
+      </div>
+
+      <div id="result"></div>
+    </div>
+
+    <div class="rules">
+      <div class="rule-card"><div class="icon">🛵</div><div class="name">Two-wheeler without gear</div><div class="age">Minimum age: <b>16 yrs</b></div></div>
+      <div class="rule-card"><div class="icon">🏍️</div><div class="name">Two-wheeler with gear</div><div class="age">Minimum age: <b>18 yrs</b></div></div>
+      <div class="rule-card"><div class="icon">🚗</div><div class="name">Four-wheeler (LMV)</div><div class="age">Minimum age: <b>18 yrs</b></div></div>
+    </div>
+
+    <footer>
+      Based on the Motor Vehicles Act, India · Educational project · Uses relational operators
+      <code>&gt;=</code>, <code>&lt;</code>, <code>==</code>
+    </footer>
+  </div>
+
+<script>
+  const VEHICLES = [
+    { id: "scooter", name: "Two-wheeler without gear", subtitle: "Scooter / Moped (≤ 50cc)", minAge: 16, icon: "🛵" },
+    { id: "bike",    name: "Two-wheeler with gear",    subtitle: "Motorbike",                  minAge: 18, icon: "🏍️" },
+    { id: "car",     name: "Four-wheeler (LMV)",       subtitle: "Car / Light Motor Vehicle",  minAge: 18, icon: "🚗" }
+  ];
+
+  let selectedVehicle = null;
+  let hasLearner = null;
+
+  // Render vehicle cards
+  const grid = document.getElementById("vehicleGrid");
+  VEHICLES.forEach(v => {
+    const btn = document.createElement("button");
+    btn.className = "vehicle-card";
+    btn.id = "veh-" + v.id;
+    btn.innerHTML = `
+      <div class="icon">${v.icon}</div>
+      <div class="name">${v.name}</div>
+      <div class="sub">${v.subtitle}</div>
+      <div class="tag">Min age ${v.minAge}</div>`;
+    btn.onclick = () => selectVehicle(v);
+    grid.appendChild(btn);
+  });
+
+  function selectVehicle(v) {
+    selectedVehicle = v;
+    document.querySelectorAll(".vehicle-card").forEach(el => el.classList.remove("selected"));
+    document.getElementById("veh-" + v.id).classList.add("selected");
+  }
+
+  function setLearner(val) {
+    hasLearner = val;
+    document.getElementById("ynYes").classList.toggle("yes-active", val === true);
+    document.getElementById("ynNo").classList.toggle("no-active", val === false);
+  }
+
+  function showResult(type, title, msg, detail) {
+    const box = document.getElementById("result");
+    box.className = "result " + type;
+    box.innerHTML = `
+      <div class="title">${title}</div>
+      <div class="msg">${msg}</div>
+      ${detail ? `<div class="detail">${detail}</div>` : ""}`;
+  }
+
+  function check() {
+    const age = parseInt(document.getElementById("age").value, 10);
+
+    if (!age || age <= 0 || age > 120) {
+      return showResult("error", "Invalid age", "Please enter a valid age between 1 and 120.");
+    }
+    if (!selectedVehicle) {
+      return showResult("error", "Vehicle not selected", "Please choose the vehicle you plan to drive.");
+    }
+    if (hasLearner === null) {
+      return showResult("error", "Learner's licence?", "Please tell us if you already have a learner's licence.");
+    }
+
+    // ===== CORE LOGIC — RELATIONAL OPERATORS  ( >=,  <,  == ) =====
+    if (age >= selectedVehicle.minAge && hasLearner === true) {
+      showResult("success",
+        "Congratulations! You are ELIGIBLE ✓",
+        `You can apply for a permanent Driving Licence for a ${selectedVehicle.name.toLowerCase()}.`,
+        `Age check: ${age} >= ${selectedVehicle.minAge}  ✓   |   Learner's licence: Yes  ✓`);
+    } else if (age >= selectedVehicle.minAge && hasLearner === false) {
+      showResult("warning",
+        "Almost there!",
+        "You meet the age requirement, but you must first obtain a Learner's Licence before applying for a permanent one.",
+        `Age check: ${age} >= ${selectedVehicle.minAge}  ✓   |   Learner's licence: No  ✗`);
+    } else {
+      const wait = selectedVehicle.minAge - age;
+      showResult("error",
+        "Not eligible yet",
+        `You must be at least ${selectedVehicle.minAge} years old to drive a ${selectedVehicle.name.toLowerCase()}. Please wait ${wait} more year${wait > 1 ? "s" : ""}.`,
+        `Age check: ${age} < ${selectedVehicle.minAge}  ✗`);
+    }
+  }
+
+  function reset() {
+    document.getElementById("age").value = "";
+    selectedVehicle = null;
+    hasLearner = null;
+    document.querySelectorAll(".vehicle-card").forEach(el => el.classList.remove("selected"));
+    document.getElementById("ynYes").classList.remove("yes-active");
+    document.getElementById("ynNo").classList.remove("no-active");
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("result").className = "";
+  }
+</script>
+</body>
+</html>
